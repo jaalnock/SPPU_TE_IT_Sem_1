@@ -1,0 +1,187 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX 100
+
+// Structure to store contact information
+struct Contact {
+    char name[50];
+    char phone[15];
+    char email[50];
+};
+
+// Function to create (or reset) the address book
+void createAddressBook() {
+    FILE *fp = fopen("address_book.txt", "w");  // Opening file in write mode to reset it
+    if (fp == NULL) {
+        printf("Error creating address book!\n");
+        return;
+    }
+    printf("Address book created/reset successfully.\n");
+    fclose(fp);
+}
+
+// Function to view all contacts in the address book
+void viewAddressBook() {
+    FILE *fp = fopen("address_book.txt", "r");
+    if (fp == NULL) {
+        printf("Error opening address book!\n");
+        return;
+    }
+
+    struct Contact contact;
+    printf("\nAddress Book Entries:\n");
+    printf("-------------------------------\n");
+
+    while (fread(&contact, sizeof(struct Contact), 1, fp)) {
+        printf("Name: %s\n", contact.name);
+        printf("Phone: %s\n", contact.phone);
+        printf("Email: %s\n", contact.email);
+        printf("-------------------------------\n");
+    }
+
+    fclose(fp);
+}
+
+// Function to insert a new contact into the address book
+void insertRecord() {
+    FILE *fp = fopen("address_book.txt", "a");  // Open file in append mode
+    if (fp == NULL) {
+        printf("Error opening address book!\n");
+        return;
+    }
+
+    struct Contact contact;
+
+    printf("Enter Name: ");
+    scanf("%s", contact.name);
+    printf("Enter Phone: ");
+    scanf("%s", contact.phone);
+    printf("Enter Email: ");
+    scanf("%s", contact.email);
+
+    fwrite(&contact, sizeof(struct Contact), 1, fp);
+    printf("Contact added successfully.\n");
+
+    fclose(fp);
+}
+
+// Function to delete a contact from the address book
+void deleteRecord() {
+    char name[50];
+    printf("Enter the name of the contact to delete: ");
+    scanf("%s", name);
+
+    FILE *fp = fopen("address_book.txt", "r");
+    FILE *temp = fopen("temp.txt", "w");
+
+    if (fp == NULL || temp == NULL) {
+        printf("Error opening files!\n");
+        return;
+    }
+
+    struct Contact contact;
+    int found = 0;
+
+    while (fread(&contact, sizeof(struct Contact), 1, fp)) {
+        if (strcmp(contact.name, name) != 0) {
+            fwrite(&contact, sizeof(struct Contact), 1, temp);
+        } else {
+            found = 1;
+        }
+    }
+
+    fclose(fp);
+    fclose(temp);
+
+    remove("address_book.txt");
+    rename("temp.txt", "address_book.txt");
+
+    if (found) {
+        printf("Contact deleted successfully.\n");
+    } else {
+        printf("Contact not found.\n");
+    }
+}
+
+// Function to modify a contact's information
+void modifyRecord() {
+    char name[50];
+    printf("Enter the name of the contact to modify: ");
+    scanf("%s", name);
+
+    FILE *fp = fopen("address_book.txt", "r+");
+    if (fp == NULL) {
+        printf("Error opening address book!\n");
+        return;
+    }
+
+    struct Contact contact;
+    int found = 0;
+
+    while (fread(&contact, sizeof(struct Contact), 1, fp)) {
+        if (strcmp(contact.name, name) == 0) {
+            found = 1;
+            printf("Enter new Name: ");
+            scanf("%s", contact.name);
+            printf("Enter new Phone: ");
+            scanf("%s", contact.phone);
+            printf("Enter new Email: ");
+            scanf("%s", contact.email);
+
+            // Move file pointer to the correct location to update the contact
+            fseek(fp, -sizeof(struct Contact), SEEK_CUR);
+            fwrite(&contact, sizeof(struct Contact), 1, fp);
+            printf("Contact modified successfully.\n");
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Contact not found.\n");
+    }
+
+    fclose(fp);
+}
+
+// Main function with a menu-driven interface
+int main() {
+    int choice;
+
+    while (1) {
+        printf("\nAddress Book Menu:\n");
+        printf("1. Create Address Book\n");
+        printf("2. View Address Book\n");
+        printf("3. Insert a Record\n");
+        printf("4. Delete a Record\n");
+        printf("5. Modify a Record\n");
+        printf("6. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                createAddressBook();
+                break;
+            case 2:
+                viewAddressBook();
+                break;
+            case 3:
+                insertRecord();
+                break;
+            case 4:
+                deleteRecord();
+                break;
+            case 5:
+                modifyRecord();
+                break;
+            case 6:
+                exit(0);
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    }
+
+    return 0;
+}

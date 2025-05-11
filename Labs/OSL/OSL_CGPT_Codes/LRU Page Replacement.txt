@@ -1,0 +1,50 @@
+#include <stdio.h>
+
+void LRU(int pages[], int n, int frames) {
+    int frame[frames], recent[frames], page_faults = 0;
+    for (int i = 0; i < frames; i++) {
+        frame[i] = -1; // Initialize frames
+        recent[i] = 0;  // Initialize recently used tracker
+    }
+
+    for (int i = 0; i < n; i++) {
+        int found = 0;
+        for (int j = 0; j < frames; j++) {
+            if (frame[j] == pages[i]) { // Page hit
+                found = 1;
+                recent[j] = i; // Update recent usage
+                break;
+            }
+        }
+
+        if (!found) { // Page fault
+            int min = 0;
+            for (int j = 1; j < frames; j++) {
+                if (recent[j] < recent[min])
+                    min = j; // Find least recently used
+            }
+            frame[min] = pages[i]; // Replace LRU page
+            recent[min] = i;        // Update recent usage
+            page_faults++;
+        }
+
+        printf("Frames after page %d: ", pages[i]);
+        for (int k = 0; k < frames; k++) {
+            if (frame[k] != -1)
+                printf("%d ", frame[k]);
+            else
+                printf("- ");
+        }
+        printf("\n");
+    }
+    printf("Total page faults (LRU): %d\n", page_faults);
+}
+
+int main() {
+    int pages[] = {1, 3, 0, 3, 5, 6, 3}; // Example page references
+    int n = sizeof(pages) / sizeof(pages[0]);
+    int frames = 3; // Frame size of at least 3
+    printf("Least Recently Used (LRU) Page Replacement\n");
+    LRU(pages, n, frames);
+    return 0;
+}

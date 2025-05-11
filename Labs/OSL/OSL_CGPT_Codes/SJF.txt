@@ -1,0 +1,76 @@
+#include <stdio.h>
+
+#define MAX_PROCESSES 100
+
+// Structure to store process details
+struct Process {
+    int pid;        // Process ID
+    int arrivalTime;
+    int burstTime;
+    int remainingTime;
+    int completionTime;
+    int waitingTime;
+    int turnAroundTime;
+    int isCompleted;
+};
+
+// Function to find the shortest job (with the smallest remaining time)
+int findShortestJob(struct Process processes[], int n, int currentTime) {
+    int shortest = -1;
+    int minRemainingTime = 1000000;
+
+    for (int i = 0; i < n; i++) {
+        if (processes[i].arrivalTime <= currentTime && !processes[i].isCompleted && processes[i].remainingTime < minRemainingTime) {
+            minRemainingTime = processes[i].remainingTime;
+            shortest = i;
+        }
+    }
+
+    return shortest;
+}
+
+int main() {
+    int n;
+    struct Process processes[MAX_PROCESSES];
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        printf("Enter arrival time and burst time for process P%d: ", i+1);
+        scanf("%d%d", &processes[i].arrivalTime, &processes[i].burstTime);
+        processes[i].pid = i + 1;
+        processes[i].remainingTime = processes[i].burstTime;
+        processes[i].isCompleted = 0;
+    }
+
+    int currentTime = 0;
+    int completed = 0;
+
+    while (completed != n) {
+        int shortest = findShortestJob(processes, n, currentTime);
+
+        if (shortest == -1) {
+            currentTime++;
+            continue;
+        }
+
+        processes[shortest].remainingTime--;
+        currentTime++;
+
+        if (processes[shortest].remainingTime == 0) {
+            processes[shortest].isCompleted = 1;
+            processes[shortest].completionTime = currentTime;
+            processes[shortest].turnAroundTime = processes[shortest].completionTime - processes[shortest].arrivalTime;
+            processes[shortest].waitingTime = processes[shortest].turnAroundTime - processes[shortest].burstTime;
+            completed++;
+        }
+    }
+
+    printf("\nProcess\tAT\tBT\tCT\tTAT\tWT\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n", processes[i].pid, processes[i].arrivalTime, processes[i].burstTime, processes[i].completionTime, processes[i].turnAroundTime, processes[i].waitingTime);
+    }
+
+    return 0;
+}

@@ -1,0 +1,65 @@
+#include <stdio.h>
+
+#define MAX_PROCESSES 100
+
+// Structure to store process details
+struct Process {
+    int pid;        // Process ID
+    int arrivalTime;
+    int burstTime;
+    int remainingTime;
+    int completionTime;
+    int waitingTime;
+    int turnAroundTime;
+};
+
+// Function to perform Round Robin Scheduling
+void roundRobin(struct Process processes[], int n, int quantum) {
+    int currentTime = 0;
+    int completed = 0;
+
+    while (completed != n) {
+        for (int i = 0; i < n; i++) {
+            if (processes[i].remainingTime > 0 && processes[i].arrivalTime <= currentTime) {
+                if (processes[i].remainingTime <= quantum) {
+                    currentTime += processes[i].remainingTime;
+                    processes[i].remainingTime = 0;
+                    processes[i].completionTime = currentTime;
+                    processes[i].turnAroundTime = processes[i].completionTime - processes[i].arrivalTime;
+                    processes[i].waitingTime = processes[i].turnAroundTime - processes[i].burstTime;
+                    completed++;
+                } else {
+                    processes[i].remainingTime -= quantum;
+                    currentTime += quantum;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    int n, quantum;
+    struct Process processes[MAX_PROCESSES];
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        printf("Enter arrival time and burst time for process P%d: ", i+1);
+        scanf("%d%d", &processes[i].arrivalTime, &processes[i].burstTime);
+        processes[i].pid = i + 1;
+        processes[i].remainingTime = processes[i].burstTime;
+    }
+
+    printf("Enter the time quantum: ");
+    scanf("%d", &quantum);
+
+    roundRobin(processes, n, quantum);
+
+    printf("\nProcess\tAT\tBT\tCT\tTAT\tWT\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n", processes[i].pid, processes[i].arrivalTime, processes[i].burstTime, processes[i].completionTime, processes[i].turnAroundTime, processes[i].waitingTime);
+    }
+
+    return 0;
+}

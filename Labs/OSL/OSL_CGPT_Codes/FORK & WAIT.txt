@@ -1,0 +1,98 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+
+// Bubble Sort (used by Parent)
+void bubbleSort(int arr[], int n) {
+    int i, j, temp;
+    for (i = 0; i < n - 1; i++) {
+        for (j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                // Swap arr[j] and arr[j+1]
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+// Selection Sort (used by Child)
+void selectionSort(int arr[], int n) {
+    int i, j, min_idx, temp;
+    for (i = 0; i < n - 1; i++) {
+        min_idx = i;
+        for (j = i + 1; j < n; j++) {
+            if (arr[j] < arr[min_idx])
+                min_idx = j;
+        }
+        // Swap arr[min_idx] with arr[i]
+        temp = arr[min_idx];
+        arr[min_idx] = arr[i];
+        arr[i] = temp;
+    }
+}
+
+// Function to print an array
+void printArray(int arr[], int size) {
+    for (int i = 0; i < size; i++)
+        printf("%d ", arr[i]);
+    printf("\n");
+}
+
+int main() {
+    int n;
+
+    // Input array size
+    printf("Enter the number of elements: ");
+    scanf("%d", &n);
+
+    int arr[n], arr_copy[n];
+
+    // Input array elements
+    printf("Enter the elements of the array: ");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &arr[i]);
+        arr_copy[i] = arr[i];  // Copy array for child to sort
+    }
+
+    pid_t pid = fork();
+
+    if (pid < 0) {
+        // Fork failed
+        printf("Fork failed!\n");
+        return 1;
+    }
+
+    if (pid == 0) {
+        // Child Process
+        printf("\nChild Process:\n");
+        printf("Sorting array using Selection Sort:\n");
+        selectionSort(arr_copy, n);
+        printArray(arr_copy, n);
+        
+        // Demonstrate orphan process
+        printf("Child is sleeping for 5 seconds to become an orphan process...\n");
+        sleep(5);
+        printf("Child process is orphaned now (if parent exits).\n");
+
+    } else {
+        // Parent Process
+        printf("\nParent Process:\n");
+        printf("Sorting array using Bubble Sort:\n");
+        bubbleSort(arr, n);
+        printArray(arr, n);
+        
+        // Demonstrate zombie process
+        printf("Parent is sleeping for 5 seconds to create a zombie process...\n");
+        sleep(5);  // Child finishes before parent calls wait
+        
+        // Waiting for child process to finish
+        wait(NULL);
+        printf("Child process finished. Parent process resuming.\n");
+    }
+
+    return 0;
+}
